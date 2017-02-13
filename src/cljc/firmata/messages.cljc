@@ -41,8 +41,22 @@
 (def I2C_CONFIG              0x78); Configure special I2C settings such as power pins and delay times
 
 
+; OneWire Messages
+(def ONEWIRE_CONFIG_REQUEST        0x41);
+(def ONEWIRE_DATA                  0x73)
+(def ONEWIRE_DELAY_REQUEST_BIT     0x10)
+(def ONEWIRE_READ_REPLY            0x43)
+(def ONEWIRE_READ_REQUEST_BIT      0x08)
+(def ONEWIRE_RESET_REQUEST_BIT     0x01)
+(def ONEWIRE_SEARCH_ALARMS_REPLY   0x45)
+(def ONEWIRE_SEARCH_ALARMS_REQUEST 0x44)
+(def ONEWIRE_SEARCH_REPLY          0x42)
+(def ONEWIRE_SEARCH_REQUEST        0x40)
+(def ONEWIRE_WITHDATA_REQUEST_BITS 0x3C)
+(def ONEWIRE_WRITE_REQUEST_BIT     0x20)
+
 ; TODO: This seems to be mixing a bit of things from the other
-(def  modes [:input :output :analog :pwm :servo :shift :i2c])
+(def  modes [:input :output :analog :pwm :servo :shift :i2c :onewire])
 
 (defn is-digital? [message]
   (<= 0x90 message 0x9F))
