@@ -32,14 +32,6 @@
           (recur (inc i) (conj acc val))
           (clojure.string/join "" (map #(format "%02X" %) acc)))))))
 
-(def addrs [[40 26 111 0 105 0 0 0 119 1]
-            [40 80 91 79 104 0 0 0 55 0]])
-
-(def answer [[count "28CD1B90060000F7"]])
-
-;;28 1A 6F 00 69 00 00 00 77
-(map decode-7bit addrs)
-
 (defmulti read-onewire-reply
   "Reads a onewire message.
 
@@ -51,9 +43,10 @@
 (defmethod read-onewire-reply ONEWIRE_SEARCH_REPLY
   [in]
   (let [pin (read! in)
-        raw (consume-sysex in '[] #(conj %1 %2))]
+        raw (consume-sysex in '[] #(conj %1 %2))
+        decoded (decode-7bit raw)]
     {:type "onewire-search-reply"
-     :addrs (list (decode-7bit raw))
+     :addrs (map #(apply str %) (partition 16 decoded))
      }))
 
 (defmethod read-sysex-event ONEWIRE_DATA
