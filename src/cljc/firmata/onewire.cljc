@@ -3,7 +3,8 @@
             [firmata.sysex :refer [consume-sysex]]
             [firmata.util :refer [msb lsb bytes-to-int]]
             [firmata.stream.spi :refer [read!]]
-            [firmata.messages :refer [SYSEX_START SYSEX_END
+            [firmata.messages :refer [SYSEX_START
+                                      SYSEX_END
                                       ONEWIRE_CONFIG_REQUEST
                                       ONEWIRE_DATA
                                       ONEWIRE_DELAY_REQUEST_BIT
@@ -19,6 +20,11 @@
             [firmata.sysex :refer [read-sysex-event
                                    read-two-byte-data]]))
 
+(defn addr2str
+  "Converts an address into a human readable hex string"
+  [addr]
+  (clojure.string/join "" (map #(format "%02X" %) addr)))
+
 (defn decode-7bit
   [b]
   (let [expected (bit-shift-right (* (count b) 7) 3)]
@@ -30,7 +36,34 @@
                         (bit-and (bit-shift-left (nth b (inc pos) 0) (- 7 s)) 0xFF))]
         (if (not= i expected)
           (recur (inc i) (conj acc val))
-          (clojure.string/join "" (map #(format "%02X" %) acc)))))))
+          acc)))))
+
+(defn encode-7bit
+  [buffer]
+  (loop [[data & remainder] buffer
+         shift 0
+         previous 0
+         acc '()]
+    (if data
+      (condp = shift
+        0 (recur remainder
+                 (inc shift)
+                 (bit-shift-right data 7)
+                 (conj acc (bit-and 0x7f data)))
+        6 (recur remainder
+                 0
+                 previous
+                 (conj acc
+                       (bit-or previous
+                               (bit-and (bit-shift-left data shift) 0x7f))
+                       (bit-shift-right data 1)))
+        (recur remainder
+               (inc shift)
+               (bit-shift-right data (- 8 (inc shift)))
+               (conj acc
+                       (bit-or previous
+                               (bit-and (bit-shift-left data shift) 0x7f)))))
+      (reverse (conj acc (if (> shift 0) previous))))))
 
 (defmulti read-onewire-reply
   "Reads a onewire message.
@@ -46,7 +79,8 @@
         raw (consume-sysex in '[] #(conj %1 %2))
         decoded (decode-7bit raw)]
     {:type "onewire-search-reply"
-     :addrs (map #(apply str %) (partition 16 decoded))
+     :addrs (map #(apply str %) (partition 8 decoded))
+     :raw raw
      }))
 
 (defmethod read-sysex-event ONEWIRE_DATA
