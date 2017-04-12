@@ -26,14 +26,14 @@
   (clojure.string/join "" (map #(format "%02X" %) addr)))
 
 (defn decode-7bit
-  [b]
-  (let [expected (bit-shift-right (* (count b) 7) 3)]
+  [buffer]
+  (let [expected (bit-shift-right (* (count buffer) 7) 3)]
     (loop [i 0 acc '[]]
       (let [j (bit-shift-left i 3)
             pos (int (/ j 7))
             s (int (mod j 7))
-            val (bit-or (bit-shift-right (nth b pos 0) s)
-                        (bit-and (bit-shift-left (nth b (inc pos) 0) (- 7 s)) 0xFF))]
+            val (bit-or (bit-shift-right (nth buffer pos 0) s)
+                        (bit-and (bit-shift-left (nth buffer (inc pos) 0) (- 7 s)) 0xFF))]
         (if (not= i expected)
           (recur (inc i) (conj acc val))
           acc)))))
