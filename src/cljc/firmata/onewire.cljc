@@ -111,7 +111,27 @@
    (let [msg (concat [SYSEX_START ONEWIRE_DATA command pin]
                      data
                      [SYSEX_END])]
-     (send-message board msg))))
+     (send-message board msg)))
+  ([board pin command device correlationId bytesExpected delay data]
+   (let [cmd (if (or device correlationId bytesExpected data delay)
+               (bit-or command ONEWIRE_WITHDATA_REQUEST_BITS)
+               command)
+         addr (or device (take 8 (repeat 0)))
+         bytesToRead (if bytesExpected
+                         (to-lsb-order bytesExpected)
+                         [0 0])
+         correlationId (if correlationId
+                         (to-lsb-order correlationId)
+                         [0 0])
+         delayValue (if delay
+                      (to-lsb-order delay 4)
+                      [0 0 0 0])
+         payload (concat [addr
+                          bytesToRead
+                          correlationId
+                          delayValue
+                          data])]
+     (send-onewire-request board pin cmd (encode-7bit payload)))))
 
 (defn enable-onewire
   ([board pin]
