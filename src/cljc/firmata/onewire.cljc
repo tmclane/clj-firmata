@@ -78,9 +78,8 @@
   (let [pin (read! in)
         raw (consume-sysex in '[] #(conj %1 %2))
         decoded (decode-7bit raw)]
-    {:type "onewire-search-reply"
+    {:type :onewire-search-reply
      :addrs (map #(apply str %) (partition 8 decoded))
-     :raw raw
      }))
 
 (defmethod read-sysex-event ONEWIRE_DATA
@@ -90,21 +89,22 @@
 
 (defn send-onewire-request
   "Sends a OneWire request with optional extended data"
-  [board pin request & data]
-  (let [msg (concat [SYSEX_START ONEWIRE_DATA request pin]
-                    data
-                    [SYSEX_END])]
-    (send-message board msg)))
+  ([board pin command]
+   (send-onewire-request board pin command nil))
+  ([board pin command data]
+   (let [msg (concat [SYSEX_START ONEWIRE_DATA command pin]
+                     data
+                     [SYSEX_END])]
+     (send-message board msg))))
 
 (defn enable-onewire
   ([board pin]
    (enable-onewire board pin false))
   ([board pin parasitic-power?]
-   (let [msg (concat [SYSEX_START ONEWIRE_DATA ONEWIRE_CONFIG_REQUEST pin (if parasitic-power? 0x01 0x00) SYSEX_END])]
-     (send-message board msg))))
+   (send-onewire-request board pin ONEWIRE_CONFIG_REQUEST
+                         [(if parasitic-power? 0x01 0x00)])))
 
 (defn list-devices
   "Sends a OneWire search command and returns the addresses found"
   [board pin]
-  (let [msg (concat [SYSEX_START ONEWIRE_DATA ONEWIRE_SEARCH_REQUEST pin SYSEX_END])]
-    (send-message board msg)))
+  (send-onewire-request board pin ONEWIRE_SEARCH_REQUEST))
