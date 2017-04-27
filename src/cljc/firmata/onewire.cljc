@@ -87,6 +87,22 @@
   ;;
   (read-onewire-reply in))
 
+(defn- to-lsb-order
+  "Converts a value to a LSB ordered list of bytes"
+  ([value count]
+   (loop [count count
+          shift 0
+          acc '()]
+     (if (= count 0)
+       (reverse acc)
+       (recur (- count 2)
+              (+ shift 16)
+              (conj acc
+                    (bit-and 0xFF (bit-shift-right value shift))
+                    (bit-and 0xFF (bit-shift-right value (+ shift 8))))))))
+  ([value]
+   (to-lsb-order value 2)))
+
 (defn send-onewire-request
   "Sends a OneWire request with optional extended data"
   ([board pin command]
