@@ -144,3 +144,8 @@
   "Sends a OneWire search command and returns the addresses found"
   [board pin]
   (send-onewire-request board pin ONEWIRE_SEARCH_REQUEST))
+
+(defn reset
+  "Resets all devices on the bus"
+  [board pin]
+  (send-onewire-request board pin ONEWIRE_RESET_REQUEST_BIT))
