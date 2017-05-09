@@ -20,10 +20,16 @@
             [firmata.sysex :refer [read-sysex-event
                                    read-two-byte-data]]))
 
-(defn addr2str
+(defn addr2hex
   "Converts an address into a human readable hex string"
   [addr]
   (clojure.string/join "" (map #(format "%02X" %) addr)))
+
+(defn hex2addr
+  "Converts a hex string into an address"
+  [addr]
+  (map #(Integer/parseInt (clojure.string/join "" %) 16)
+       (partition 2 addr)))
 
 (defn decode-7bit
   [buffer]
@@ -79,8 +85,7 @@
         raw (consume-sysex in '[] #(conj %1 %2))
         decoded (decode-7bit raw)]
     {:type :onewire-search-reply
-     :addrs (map #(apply str %) (partition 8 decoded))
-     }))
+     :addrs (map addr2hex (partition 8 decoded))}))
 
 (defmethod read-sysex-event ONEWIRE_DATA
   [in]
