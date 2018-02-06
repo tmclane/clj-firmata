@@ -154,3 +154,13 @@
   "Resets all devices on the bus"
   [board pin]
   (send-onewire-request board pin ONEWIRE_RESET_REQUEST_BIT))
+
+(defn convert-all!
+  "Requests all temperature devices on the bus to convert"
+  [board pin]
+  (send-onewire-request board pin (bit-or ONEWIRE_SEARCH_ALARMS_REQUEST
+                                          ONEWIRE_RESET_REQUEST_BIT)))
+
+;(defn request-temperature
+;  [board pin address]
+;  (send-onewire-request board pin ))
